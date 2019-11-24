@@ -1,0 +1,642 @@
+import random
+from tkinter import *
+
+#konfiguracja głównego okna interfejsu graficznego
+def on_configure(event):
+    canvas.configure(scrollregion=canvas.bbox('all'))
+root = Tk()
+canvas = Canvas(root)
+canvas.pack(side=LEFT, fill=BOTH, expand=TRUE)
+scrollbar = Scrollbar(root, command=canvas.yview)
+scrollbar.pack(side=RIGHT, fill='y')
+canvas.configure(yscrollcommand = scrollbar.set)
+canvas.bind('<Configure>', on_configure)
+okno = Frame(canvas)
+canvas.create_window((0,0), window=okno, anchor=NW)
+menu = Frame(okno)
+fplayers = Frame(okno)
+def_color = okno.cget("bg")
+menu.grid(row = 3, rowspan = 6, column = 5, columnspan = 4, sticky=N)
+fplayers.grid(row = 3, rowspan = 6, column = 1, columnspan = 4, sticky=N)
+Var_interact = IntVar()
+
+# Główna klasa pola
+class Property:	
+	def __init__(self,buy_price,rent,house_price,px,py,name,color,id):
+		self.buy_price = buy_price
+		self.rent = rent
+		self.house_price = house_price
+		self.owner = None
+		self.for_sale = True
+		self.houses = 0
+		self.name = name
+		self.color = color
+		self.id = id
+		self.print_property(px,py)
+
+	# wyświetlenie pola
+	def print_property(self,px,py):
+		self.frame = Frame(okno)
+		lname = Label(self.frame,text = self.name,bg = self.color)
+		self.lowner = Label(self.frame,text = self.owner)
+		self.lprice = Label(self.frame,text = (self.buy_price,",",self.house_price))
+		self.lrent = Label(self.frame, text = self.rent)
+		lname.grid(row=1, column = 1, columnspan = 5)
+		self.lowner.grid(row=2, column = 1, columnspan = 5)
+		self.lprice.grid(row=3, column = 1, columnspan = 5)
+		self.lrent.grid(row=4, column = 1, columnspan = 5)
+		self.frame.grid(row = px, column = py)
+		self.lhouses = [None,None,None,None,None]
+		self.lhouses[0] = Label(self.frame,text = "  ", bg = "lime")
+		self.lhouses[1] = Label(self.frame,text = "  ", bg = "lime")
+		self.lhouses[2] = Label(self.frame,text = "  ", bg = "lime")
+		self.lhouses[3] = Label(self.frame,text = "  ", bg = "lime")
+		self.lhouses[4] = Label(self.frame,text = "  ", bg = "red")
+
+		self.fmenu = Frame(menu)
+		lmenu = Label(self.fmenu, text = self.name)
+		self.bsell = Button(self.fmenu, text = "SELL")
+		self.bbuyh = Button(self.fmenu, text = "BUY HOUSE")
+		self.bsellh = Button(self.fmenu, text = "SELL HOUSE")
+		lmenu.grid(row = 0, column = 0)
+		self.bsell.grid(row = 0, column = 1)
+		self.bbuyh.grid(row=0, column = 2)
+		self.bsellh.grid(row=0, column = 3)
+
+		frames = []
+		for i in range(26):
+			frames.append(Label(self.frame, text = "  ", bg = "black"))
+			if i <= 6:
+				frames[i].grid(row = 0, column = i)
+			elif i <= 13:
+				frames[i].grid(row = i-6, column = 6)
+			elif i <= 19:
+				frames[i].grid(row = 7, column = 19-i)
+			else:
+				frames[i].grid(row = 26-i, column = 0)
+
+	# metoda do kupna pola
+	def buy_property(self, current_player, board):
+		if self.for_sale and self.owner == None:
+			if current_player.money >= self.buy_price:
+				self.owner = current_player
+				current_player.pay(self.buy_price)
+				self.lowner.configure(text = self.owner.name, bg = current_player.color)
+				current_player.lmoney.configure(text = current_player.money)
+				current_player.owned_properties.append(self)
+				if all(map(lambda prop: prop.owner == current_player, board.prop_by_color[self.id])):
+					for prop in board.prop_by_color[self.id]:
+						prop.rent *= 2
+						prop.lrent.configure(text = prop.rent)
+			else:
+				print("Nie masz wystarczająco pieniędzy")
+		else:
+			print("To pole nie jest na sprzedaż")
+
+	def AM_buy_property(self, current_player, board):
+		self.owner = current_player
+		self.lowner.configure(text = self.owner.name, bg = current_player.color)
+		current_player.owned_properties.append(self)
+		if all(map(lambda prop: prop.owner == current_player, board.prop_by_color[self.id])):
+			for prop in board.prop_by_color[self.id]:
+				prop.rent *= 2
+				prop.lrent.configure(text = prop.rent)
+
+	#metoda do sprzedaży pola
+	def sell_property(self, current_player, board):
+		if self.owner == current_player:
+			if all(map(lambda prop: prop.owner == current_player, board.prop_by_color[self.id])):
+				for prop in board.prop_by_color[self.id]:
+					for i in range(prop.houses):
+						prop.__AM_sell_house(current_player)
+					prop.rent //= 2
+					prop.lrent.configure(text = prop.rent)
+			self.owner = None
+			current_player.money += round(self.buy_price*0.9)
+			self.lowner.configure(text = "", bg = def_color)
+			current_player.lmoney.configure(text = current_player.money)
+			self.fmenu.grid_remove()
+			current_player.owned_properties.remove(self)
+		else:
+			print("To pole nie jest twoje")
+
+	def AM_sell_property(self, current_player, board):
+		if self.owner == current_player:
+			if all(map(lambda prop: prop.owner == current_player, board.prop_by_color[self.id])):
+				for prop in board.prop_by_color[self.id]:
+					for i in range(prop.houses):
+						prop.__AM_sell_house(current_player)
+					prop.rent //= 2
+					prop.lrent.configure(text = prop.rent)
+			self.owner = None
+			self.lowner.configure(text = "", bg = def_color)
+			self.fmenu.grid_remove()
+			current_player.owned_properties.remove(self)
+
+    # metoda do sprzedaży domu/hotelu
+	def sell_house(self, current_player, board):
+		if current_player == self.owner:
+			if self.houses > 0:
+				self.lhouses[self.houses-1].grid_remove()
+				self.houses -= 1
+				self.rent //= 2
+				self.lrent.configure(text = self.rent)
+				current_player.money += round(self.house_price*0.9)
+				current_player.lmoney.configure(text = current_player.money)
+			else:
+				print("Nie możesz sprzedać domu na tym polu")
+		else:
+			print("Nie posiadasz tego pola")
+
+	# metoda pomocnicza (prywatna) do sprzedaży domu w trybie administratora
+	def __AM_sell_house(self,current_player):
+		if self.houses > 0:
+			self.lhouses[self.houses-1].grid_remove()
+			self.houses -= 1
+			self.rent //= 2
+			self.lrent.configure(text = self.rent)
+			current_player.money += round(self.house_price*0.9)
+			current_player.lmoney.configure(text = current_player.money)
+
+	# metoda do kupna domu/hotelu
+	def buy_house(self, current_player, board):
+		if self.owner == current_player and current_player.money >= self.house_price and self.houses < 5:
+			if all(map(lambda prop: prop.owner == current_player, board.prop_by_color[self.id])):
+				self.lhouses[self.houses].grid(row=5,column = self.houses + 1)
+				self.houses += 1
+				self.rent *=2
+				self.lrent.configure(text = self.rent)
+				current_player.money -= self.house_price
+				current_player.lmoney.configure(text = current_player.money)
+			else:
+				print("Nie posiadasz wszystkich pól tego koloru")
+		else:
+			print("Nie możesz kupić tutaj domu")
+		Var_interact.set(1)
+
+# klasa pól spedjalny (których nie można kupić)
+class Special_property(Property):
+	def __init__(self,px,py,name):
+		Property.__init__(self,0,0,0,px,py,name,"white",0)
+		self.for_sale = False
+		self.rent = 0
+		self.lrent.configure(text = "")
+		self.lprice.configure(text = "")
+
+# klasa pola pójścia do więzenia
+class Go_to_jail(Special_property):
+	pass
+
+# klasy poszczególnych typów pól
+class Brown_property(Property):
+	def __init__(self,px,py,name):
+		Property.__init__(self,60,5,30,px,py,name,"brown",1)
+
+class Light_blue_property(Property):
+	def __init__(self,px,py,name):
+		Property.__init__(self,100,10,50,px,py,name,"aqua",2)
+
+class Pink_property(Property):
+	def __init__(self,px,py,name):
+		Property.__init__(self,140,20,70,px,py,name,"pink",3)
+
+class Orange_property(Property):
+	def __init__(self,px,py,name):
+		Property.__init__(self,180,25,100,px,py,name,"orange",4)
+
+class Red_property(Property):
+	def __init__(self,px,py,name):
+		Property.__init__(self,220,40,120,px,py,name,"red",5)
+
+class Yellow_property(Property):
+	def __init__(self,px,py,name):
+		Property.__init__(self,260,50,150,px,py,name,"yellow",6)
+
+class Green_property(Property):
+	def __init__(self,px,py,name):
+		Property.__init__(self,300,60,180,px,py,name,"green",7)
+
+class Dark_blue_property(Property):
+	def __init__(self,px,py,name):
+		Property.__init__(self,350,75,200,px,py,name,"blue",8)
+
+class Railway(Property):
+	def __init__(self,px,py,name):
+		Property.__init__(self,200,100,0,px,py,name,"lightgray",9)
+		self.lprice.configure(text = self.buy_price)
+	def buy_house(self,current_player,board):
+		print("Nie możesz kupić tu domu")
+
+#klasa gracza
+class Player:
+	def __init__(self,name,color,px,py):
+		self.money = 2000
+		self.name = name
+		self.position = 0
+		self.color = color
+		self.owned_properties = []
+		self.print_player(px,py)
+
+	# metoda do wyświetlania gracza
+	def print_player(self,px,py):
+		self.pawn = None
+		self.in_jail = False
+		self.rounds_in_jail = 0
+		self.frame =Frame(fplayers, width = 200, height = 100)
+		ln = Label(self.frame,text = "Gracz: ")
+		self.lname = Label(self.frame, text = self.name, bg = self.color)
+		lm = Label(self.frame, text = "Pieniądze: ")
+		self.lmoney = Label(self.frame, text = self.money)
+		self.ljail = Label(self.frame, text = "")
+		self.bexchange = Button(self.frame, text = "HANDEL")
+		ln.grid(row=0, column=0)
+		self.lname.grid(row=0, column=1)
+		lm.grid(row=1, column=0)
+		self.lmoney.grid(row=1, column=1)
+		self.ljail.grid(row=2, columnspan =2)
+		self.frame.grid(row=px,column=py)
+
+	# metoda do zmiany pozycji gracza
+	def go_to(self,position):
+		self.position = position
+
+	# metod do zapłaty określonej kwoty przez gracza
+	def pay(self,price):
+		self.money -= price
+
+	# metoda umożliwiająca bankrutowanie graczowi
+	def bankrupt(self,player,board):
+		if self != player and player != None:
+			self.pawn.grid_remove()
+			player.money += self.money
+			player.lmoney.configure(text = player.money)
+			for property in self.owned_properties:
+				property.owner = player
+				property.lowner.configure(text = player.name, bg = player.color)
+				player.owned_properties.append(property)
+			self.lmoney.configure(text = "BANKRUT")
+		else:
+			self.pawn.grid_remove()
+			for property in self.owned_properties:
+				property.sell_property(self,board)
+			self.lmoney.configure(text = "BANKRUT")
+
+# klasa planszy
+class Board:
+	def __init__(self,properties):
+		self.dict_of_positions = {}
+		self.dict_of_properties = {}
+		i = 0
+		self.prop_by_color = [[],[],[],[],[],[],[],[],[],[]]
+		for property in properties:
+			self.add_to_board(property,i)
+			i = i+1
+
+	# metoda dodająca nowe pole do planszy
+	def add_to_board(self,property,position):
+		self.dict_of_properties[position] = property
+		self.dict_of_positions[property] = position
+		self.prop_by_color[property.id].append(property)
+
+# klasa kostki
+class Dice:
+	def __init__(self,px,py,name):
+		self.val = None
+		self.print_dice(px,py,name)
+
+	# metoda rysująca kostki
+	def print_dice(self,px,py,name):
+		self.frame = Frame(okno, width = 100, height = 100)
+		ln = Label(self.frame, text = name)
+		self.lval = Label(self.frame, text = self.val)
+		ln.grid(row = 0)
+		self.lval.grid(row = 1)
+		self.frame.grid(row=px, column =py)
+
+	# metoda losująca nowy wynik na kostca
+	def roll(self):
+		self.val = random.randint(1,6)
+
+class Exchange:
+	def __init__(self,player1,player2,board,game):
+		self.player1 = player1
+		self.player2 = player2
+		self.board = board
+		self.game = game
+		self.print_exchange()
+		self.do_exchange()
+
+	def print_exchange(self):
+		self.fexchange = Frame(okno)
+		self.lp1 = Label(self.fexchange, text = self.player1.name)
+		self.lp2 = Label(self.fexchange, text = self.player2.name)
+		self.var_end_exchange = IntVar()
+		self.bendex = Button(self.fexchange, text = "Zakończ wymianę", command = lambda : (self.var_end_exchange.set(1), Var_interact.set(1)))
+		self.lp1.grid(row=0,column=0)
+		self.lp2.grid(row=0,column=5)
+		self.bendex.grid(row=0,column=3)
+		self.varsp1 = []
+		self.varsp2 = []
+		self.bsp1 = []
+		self.bsp2 = []
+		self.vp1money = IntVar()
+		self.vp2money = IntVar()
+		self.ep1money = Entry(self.fexchange, textvariable = self.vp1money)
+		self.ep2money = Entry(self.fexchange, textvariable = self.vp2money)
+
+		for i in range(len(self.player1.owned_properties)):
+			self.varsp1.append(IntVar())
+			self.bsp1.append(Checkbutton(self.fexchange, text = self.player1.owned_properties[i].name, variable = self.varsp1[i]))
+			self.bsp1[i].grid(row = i+1, column = 0)
+		self.ep1money.grid(row = len(self.varsp1) + 2, column = 0)
+
+		for i in range(len(self.player2.owned_properties)):
+			self.varsp2.append(IntVar())
+			self.bsp2.append(Checkbutton(self.fexchange, text = self.player2.owned_properties[i].name, variable = self.varsp2[i]))
+			self.bsp2[i].grid(row = i+1, column = 5)
+		self.ep2money.grid(row = len(self.varsp2) + 2, column = 5)
+
+		self.fexchange.grid(row=0, rowspan = 5, column = 11, columnspan = 5)
+
+		self.game.bend.grid_remove()
+		self.game.bbankrupt.grid_remove()
+		self.game.bbuy.grid_remove()
+
+		for i in range(len(self.player1.owned_properties)):
+			self.player1.owned_properties[i].fmenu.grid_remove()
+
+		for player in self.game.players:
+			if player != self.player1:
+				player.bexchange.grid_remove()
+
+	def do_exchange(self):
+		# odczekania do zakonczenia wymiany
+		self.bendex.wait_variable(self.var_end_exchange)
+		m1 = self.player1.money
+		m2 = self.player2.money
+		props1 = self.player1.owned_properties[:]
+		props2 = self.player2.owned_properties[:]
+		# zapłata pieniędzy
+		self.player1.money = m1 - min(self.vp1money.get(),m1) + min(m2,self.vp2money.get())
+		self.player1.lmoney.configure(text = self.player1.money)
+		self.player2.money = m2 - min(m2,self.vp2money.get()) + min(m1,self.vp1money.get())
+		self.player2.lmoney.configure(text = self.player2.money)
+		# wymiana polami
+		for i in range(len(self.varsp1)):
+			if self.varsp1[i].get():
+				property = props1[i]
+				property.AM_sell_property(self.player1,self.board)
+				property.AM_buy_property(self.player2,self.board)
+
+		for i in range(len(self.varsp2)):
+			if self.varsp2[i].get():
+				property = props2[i]
+				property.AM_sell_property(self.player2,self.board)
+				property.AM_buy_property(self.player1,self.board)
+
+		self.fexchange.grid_remove()
+		self.game.bend.grid(row = 1, column = 6)
+		self.game.bbankrupt.grid(row = 1, column = 5)
+		self.game.bbuy.grid(row = 1, column = 4)
+
+# główna klasa gry
+class Game:
+	def __init__(self,board,players,dice1,kostk2):
+		self.board = board
+		self.players = players
+		self.dice1 = dice1
+		self.dice2 = dice2
+		self.End_of_round = False
+		self.num_of_current_player = None
+
+	# metoda kończąca grę
+	def __end(self):
+		self.End_of_round = True
+
+	def __do_exchange(self,player1,player2):
+		exchange = Exchange(player1,player2,self.board,self)
+
+	# metoda wyznaczająca następnego gracza
+	# w przypadku bankructwa jednego z graczy
+	def __change_num_of_player(self):
+   		self.num_of_current_player = ((self.num_of_current_player % (len(self.players)+1)) % len(self.players) -1)
+
+	def __get_exchange_command(self,player1,player2):
+		return lambda : self.__do_exchange(player1,player2)
+
+   	# prywatna metoda tworząca komendy do przycisków
+	def __get_command(self, current_player, i, board):
+		prop = current_player.owned_properties[i]
+		return lambda: (Var_interact.set(1), \
+			   		    prop.buy_house(current_player, board)), \
+               lambda: (Var_interact.set(1), \
+                        prop.sell_property(current_player, board)), \
+               lambda: (Var_interact.set(1), \
+                        prop.sell_house(current_player, board))
+   
+    # główna metoda odpowiedzialna za główną pętlę gry      
+	def play(self):
+		# ustawienie wartości początkowych zmiennych
+		round = 0
+		self.num_of_current_player = 0
+		Var_kostki = IntVar()
+		# wyświetlenie przycisków i etykiet
+		fround = Frame(okno, width = 100, height = 100)
+		bdices = Button(okno,text="LOSUJ",command = lambda: (self.dice1.roll(), self.dice2.roll(), Var_kostki.set(1)))
+		self.bend = Button(okno,text="ZAKOŃCZ",command = lambda : (Var_interact.set(1), self.__end()))
+		self.bbuy = Button(okno, text = "KUP", command = lambda: (Var_interact.set(1),current_property.buy_property(current_player, self.board)))
+		self.bbankrupt = Button(okno, text = "BANKRUTUJ")
+		lround = Label(fround, text = "Tura gracza:")
+		lroundpname = Label(fround, text = None)
+		lround.grid(row = 0)
+		lroundpname.grid(row = 1)
+		fround.grid(row=2,column=4,columnspan=2)
+
+		for i in range(len(self.players)):
+		    #wyświetlenie pionków graczy
+			player = self.players[i]
+			player.pawn = Label(self.board.dict_of_properties[player.position].frame,text = "  ", bg = player.color)
+			player.pawn.grid(row=6,column = i+1)
+
+		# główna pętla gry
+		while True:
+			self.End_of_round = False
+			# warunek końcowy gry
+			if len(self.players) == 1:
+				print(f"Grę wygrał gracz: {self.players[0].name} w {round} tur.")
+				#root.destroy() - zamknięcie okna po wygranej
+				break
+
+			# wyznaczenie aktualnego gracza i pola
+			current_player = self.players[self.num_of_current_player]
+			current_property = self.board.dict_of_properties[current_player.position]
+
+			# konfiguracja etykiet
+			lroundpname.configure(text=current_player.name)
+			dice1.lval.configure(text="")
+			dice2.lval.configure(text="")
+
+			bdices.grid(row = 1, column = 3) # wyświetlenie przycisku Losuj
+			bdices.wait_variable(Var_kostki) # czekania na rzut kostkami
+			bdices.grid_remove() # usunięcie przycisku Losuj
+			dice1.lval.configure(text=self.dice1.val) # wyświetlenie wartości rzutów
+			dice2.lval.configure(text=self.dice2.val)
+
+			# rozpatrzenie sytuacji, gdy aktualny gracz znajduje się w więzieniu
+			if current_player.in_jail and current_player.rounds_in_jail < 3 and self.dice1.val != self.dice2.val:
+				current_player.rounds_in_jail += 1
+			else:
+				if current_player.in_jail:
+					current_player.rounds_in_jail = 0
+					current_player.in_jail = False
+					current_player.ljail.configure(text = "")
+
+				# wyznaczenie nowej pozycji gracza
+				new_position = (current_player.position + self.dice1.val + self.dice2.val)
+
+				# przydzielenie dodatkowych pieniędzy, jeśli gracz okrążył całą planszę
+				if new_position >= (len(self.board.dict_of_properties)-1):
+					current_player.money += 200
+					current_player.lmoney.configure(text = current_player.money)
+					new_position = new_position % (len(self.board.dict_of_properties)-1)
+				current_player.go_to(new_position) # zmiana pozycji gracza
+
+				# wyznaczenie aktualnego pola
+				current_property = self.board.dict_of_properties[current_player.position]
+
+				current_player.pawn.grid_remove() # wyświetlenie nowej pozycji pionka
+				current_player.pawn = Label(current_property.frame,text = "  ", bg = current_player.color)
+				current_player.pawn.grid(row=6,column = (self.num_of_current_player + 1))
+
+				# rozpatrzenie sytuacji, gdy gracz wszedł na pole
+				# "pójścia do więzenia"
+				if isinstance(current_property,Go_to_jail):
+					current_player.go_to(4)
+					current_property = self.board.dict_of_properties[4]
+					current_player.pawn.grid_remove() # wyświetlenie nowej pozycji pionka
+					current_player.pawn = Label(current_property.frame,text = "  ", bg = current_player.color)
+					current_player.pawn.grid(row=6,column = (self.num_of_current_player + 1))
+					current_player.in_jail = True
+					current_player.ljail.configure(text = "Player in jail")
+
+			# Drugi etap tury, polegający na umożlieniu graczowi interakcji
+			# Np kupna / sprzedaży
+			self.bbuy.grid(row=1,column=4)
+			self.bbankrupt.configure(command = lambda: (current_player.bankrupt(current_property.owner,self.board), \
+				                                   Var_interact.set(1), \
+				                                   self.__end(), \
+				                                   self.players.remove(current_player), \
+				                                   self.__change_num_of_player()))
+			self.bbankrupt.grid(row=1,column=5)
+			self.bend.grid(row=1, column=6) # pojawienie się przycisku zakończ
+
+			# wewnętrzna pętla umożliwiająca interakcje do momentu zakończenia tury
+			while not self.End_of_round:
+
+				# wyświetlenie przycisków umożliwiających zarządzaniem posiadanymi polami
+				for i in range(len(current_player.owned_properties)):
+					prop = current_player.owned_properties[i]
+					commandbuyh, commandsell, commandsellh = self.__get_command(current_player, i, self.board)
+					prop.fmenu.grid(row = i, column = 0)
+					prop.bbuyh.configure(command = commandbuyh)
+					prop.bsell.configure(command = commandsell)
+					prop.bsellh.configure(command = commandsellh)
+
+				for player in self.players:
+					if player != current_player:
+						exchange_command = self.__get_exchange_command(current_player,player)
+						player.bexchange.configure(command = exchange_command)
+						player.bexchange.grid(row=0,column=2)
+
+				# oczekiwania na interakcje
+				self.bend.wait_variable(Var_interact)
+
+				# usunięcie menu
+				for i in range(len(current_player.owned_properties)):
+					current_player.owned_properties[i].fmenu.grid_remove()
+
+				for player in self.players:
+					if player != current_player:
+						player.bexchange.grid_remove()
+
+			self.bbuy.grid_remove()
+
+			# Ostatni etap tury polegający na zapłacie czynszu
+			if current_player in self.players:
+				# bankructwo gracza
+				if (current_player.money < current_property.rent 
+					and current_property.owner != current_player 
+					and current_property.owner != None): # bankurctwo
+					self.players.remove(current_player)
+					current_player.pawn.grid_remove()
+					current_player.lmoney.configure(text = "BANKRUT")
+					current_property.owner.money += current_player.money
+					current_property.owner.lmoney.configure(text = current_property.owner.money)
+					for property in current_player.owned_properties:
+						property.owner = current_property.owner
+						property.lowner.configure(text = current_property.owner.name, bg = current_property.owner.color)
+						current_property.owner.owned_properties.append(property)
+				# zapłata czynszu
+				elif current_property.owner != current_player and current_property.owner != None: # rent za pole
+					current_player.pay(current_property.rent)
+					current_property.owner.money += current_property.rent
+					current_property.owner.lmoney.configure(text = current_property.owner.money)
+					current_player.lmoney.configure(text = current_player.money)
+
+			# zakończenie tury, usunięcie przycisków
+			self.bend.grid_remove()
+			self.bbankrupt.grid_remove()
+			self.num_of_current_player = (self.num_of_current_player + 1) % len(self.players)
+			round += 1
+
+
+pole1 = Special_property(9,9,"   START  ")
+pole2 = Brown_property(9,8," Old Kent ")
+pole3 = Brown_property(9,7," Whitech  ")
+pole4 = Brown_property(9,6,"    Baltic    ")
+pole5 = Railway(9,5," Cross St. ")
+pole6 = Light_blue_property(9,4,"  Oriental  ")
+pole7 = Light_blue_property(9,3," Vermont ")
+pole8 = Light_blue_property(9,2,"   Euston   ")
+pole9 = Light_blue_property(9,1,"Pentonvill")
+pole10 = Special_property(9,0,"     Jail     ")
+pole11 = Pink_property(8,0," Pall Mall ")
+pole12 = Pink_property(7,0,"Whitehall")
+pole13 = Pink_property(6,0,"  Virginia  ")
+pole14 = Railway(5,0,"Marylebo.")
+pole15 = Orange_property(4,0,"  Bow St.  ")
+pole16 = Orange_property(3,0,"  Marlbor  ")
+pole17 = Orange_property(2,0,"   Vine St.  ")
+pole18 = Orange_property(1,0," New York")
+pole19 = Special_property(0,0,"  Parking  ")
+pole20 = Red_property(0,1," Kentucky")
+pole21 = Red_property(0,2,"  Fleet St.  ")
+pole22 = Red_property(0,3," Trafalgar ")
+pole23 = Railway(0,4," Fenchur.")
+pole24 = Yellow_property(0,5," Leicester ")
+pole25 = Yellow_property(0,6," Coventry ")
+pole26 = Yellow_property(0,7,"  Picadilly ")
+pole27 = Yellow_property(0,8,"   Marvin  ")
+pole28 = Go_to_jail(0,9,"Go to jail")
+pole29 = Green_property(1,9,"Regent St.")
+pole30 = Green_property(2,9,"Oxford St.")
+pole31 = Green_property(3,9,"  Bond St. ")
+pole32 = Railway(4,9," Liverpool")
+pole33 = Green_property(5,9,"   Pacyfic  ")
+pole34 = Dark_blue_property(6,9,"Park Lane")
+pole35 = Dark_blue_property(7,9,"Park Place")
+pole36 = Dark_blue_property(8,9,"  Mayfair  ")
+plansza = Board([pole1,pole2,pole3,pole4,pole5,pole6,pole7,pole8,pole9,pole10,pole11,pole12,pole13,pole14,pole15,pole16,
+	             pole17,pole18, pole19, pole20,pole21,pole22,pole23,pole24,pole25,pole26,pole27, pole28,pole29,pole30,pole31,
+	             pole32,pole33,pole34,pole35, pole36])
+dice1 = Dice(2,3,"Kostka 1:")
+dice2 = Dice(2,6,"Kostka 2:")
+gracz1 = Player("Gracz 1","green",0,10)
+gracz2 = Player("Gracz 2","blue",1,10)
+gracz3 = Player("Gracz 3", "yellow",2,10)
+gracze = [gracz1,gracz2,gracz3]
+gra = Game(plansza,gracze,dice1,dice2)
+
+
+gra.play()
+root.mainloop()

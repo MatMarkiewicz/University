@@ -1,0 +1,226 @@
+#lang racket
+
+;; LISTA 3
+
+;; Cw 1
+
+(define (make-rat n d)
+  (cons n (cons d null)))
+
+(define (numer x)
+  (car x))
+
+(define (denom x)
+  (car (cdr x)))
+
+(define (rat? x)
+  (and (pair? x)
+       (pair? (cdr x))
+       (not (= (denom x) 0 ))))
+
+(define (make-rat-2 n d)
+  (let ((g (gcd n d)))
+    (cons (/ n g) (cons (/ d g) null))))
+
+;; (numer (make rat x y)) = (car (cons n (cons d null)))) = n
+;; (denom ((make rat x y)) = (car (cdr (cons n (cons d null))))) = (car (cons d null)) = d
+
+;; Cw 2
+
+(define (make-vect p1 p2)
+  (cons p1 p2))
+
+(define (vect-begin v)
+  (car v))
+
+(define (vect-end v)
+  (cdr v))
+
+(define (vect? v)
+  (and (pair? v)
+       (point? (vect-begin v))
+       (point? (vect-end v))))
+
+(define (make-point x y)
+  (cons x y))
+
+(define (point-x p)
+  (car p))
+
+(define (point-y p)
+  (cdr p))
+
+(define (point? p)
+  (pair? p))
+
+(define (square x)
+  (* x x))
+
+(define (display-point p )
+  ;; Procedura z listy zadań
+  (display "(")
+  (display ( point-x p ) )
+  (display ", ")
+  (display ( point-y p ) )
+  (display ")") )
+
+(define ( display-vect v )
+  ;; Procedura z listy zadań
+  (display "[")
+  (display-point ( vect-begin v ) )
+  (display ", ")
+  (display-point ( vect-end v ) )
+  (display "]") )
+
+(define (vect-length v)
+  (let ((a (- (point-x (vect-end v)) (point-x (vect-begin v))))
+        (b (- (point-y (vect-end v)) (point-y (vect-begin v)))))
+    (sqrt (+ (square a) (square b)))))
+
+(define (vect-scale v k)
+  (let ((a (- (point-x (vect-end v)) (point-x (vect-begin v))))
+        (b (- (point-y (vect-end v)) (point-y (vect-begin v))))
+        (begin (vect-begin v))
+        (endx (point-x (vect-end v)))
+        (endy (point-y (vect-end v))))
+    (make-vect begin (make-point (* k endx) (* k endy)))))
+
+(define (vect-translate v p)
+  (let ((a (- (point-x (vect-end v)) (point-x (vect-begin v))))
+        (b (- (point-y (vect-end v)) (point-y (vect-begin v))))
+        (beginx (point-x p))
+        (beginy (point-y p)))
+    (make-vect p (make-point (+ beginx a) (+ beginy b)))))
+
+
+;(define p0 (make-point 0 0))
+;(display-point p0)
+;(newline)
+;(define p1 (make-point 1 1))
+;(display-point p1)
+;(newline)
+;(define v0 (make-vect p0 p1))
+;(display-vect v0)
+;(newline)
+;(vect-length v0)
+;(define v1 (vect-scale v0 10))
+;(display-vect v1)
+;(newline)
+;(vect-length v1)
+;(define v2 (vect-translate v1 p1))
+;(display-vect v2)
+;(newline)
+;(vect-length v2)
+
+
+;; Cw 3
+
+(define (>= x y)
+  (or (= x y)
+      (> x y)))
+
+(define (make-vect-2 begin dir length)
+  (define (make-dir a)
+    (cond [(and (>= a 0) (< a (* 2 pi))) a]
+           [(< a 0) (make-dir (+ a (* 2 pi)))]
+           [else (make-dir (- a (* 2 pi)))]))
+  (cons begin (cons (make-dir dir) (cons length null))))
+
+(define (vect-begin-2 v)
+  (car v))
+
+(define (vect-dir v)
+  (car (cdr v)))
+
+(define (vect-length-2 v)
+  (car (cdr (cdr v))))
+
+(define (vect?-2 v)
+  (and (pair? v)
+       (pair? (cdr v))
+       (pair? (cdr (cdr v)))
+       (< (vect-dir v) (* 2 pi))
+       (>= (vect-dir v) 0)
+       (>= (vect-length-2) 0)))
+
+(define (vect-end-2 v)
+  (let ((a (* (sin (vect-dir v)) (vect-length-2 v)))
+        (b (* (cos (vect-dir v)) (vect-length-2 v)))
+        (beginx (point-x (vect-begin-2 v)))
+        (beginy (point-y (vect-begin-2 v))))
+    (make-point (+ beginx a)
+                (+ beginy b))))
+
+(define (vect-scale-2 v k)
+  (make-vect-2 (vect-begin-2 v) (vect-dir v) (* k (vect-length-2 v))))
+
+(define (vect-translate-2 v p)
+  (make-vect-2 p (vect-dir v) (vect-length-2 v)))
+
+
+;; Cw 4
+ 
+(define (append2 xs ys)
+  ;; procedura z wykładu
+  (if (null? xs)
+      ys
+      (cons (car xs) (append (cdr xs) ys))))
+
+(define (reverse xs)
+  (define (iter l acc)
+    (if (null? l)
+        acc
+        (iter (cdr l) (cons (car l) acc))))
+  (iter xs null))
+
+(define (reverse-rec xs)
+  (if (null? xs)
+      null
+      (append (reverse-rec (cdr xs))
+              (cons (car xs) null))))
+
+
+;; Cw 5
+
+(define (insert xs n)
+  (cond [(null? xs) (cons n xs)]
+        [(> (car xs) n) (cons n xs)]
+        [else (cons (car xs) (insert (cdr xs) n))]))
+
+(define (insert-sort l)
+  (define (helper xs ys)
+    (if (null? xs)
+        ys
+        (helper (cdr xs) (insert ys (car xs)))))
+  (helper l null))
+
+(define (insert-sort-2 xs)
+  (if (null? xs)
+      null
+      (insert (insert-sort-2 (cdr xs)) (car xs))))
+
+
+;; Cw 6
+
+(define (insert-2 xs x)
+  (define (helper head tail)
+    (if (null? tail)
+        (cons (append head x) null)
+        (cons (append head x tail) (helper (append head (list (car tail))) (cdr tail)))))
+  (apply append (map (lambda (x) (helper `() x)) xs)))
+       
+(define (permutations xs)
+  (if (null? xs)
+      (list null)
+      (insert-2 (permutations (cdr xs)) (list (car xs)))))
+
+;; Cw 9
+
+(define (multi-append . args)
+  (define (iter xs)
+    (if (null? xs)
+        null
+        (if (null? (car xs))
+            (iter (cdr xs))
+            (cons (car (car xs)) (iter (cons (cdr (car xs)) (cdr xs)))))))
+  (iter args))

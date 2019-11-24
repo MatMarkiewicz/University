@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1571677768 source:c:\studia\5 semestr\mia\3\d\main.cpp
+	<iostream>
+	<cstdio>
+	<vector>
+

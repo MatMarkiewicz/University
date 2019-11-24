@@ -1,0 +1,40 @@
+; FLTK preferences file format 1.0
+; vendor: Brighter3D
+; application: unknown
+
+[.]
+
+PrimaryFotons:128
+EnvFotons:8192
+Caustics:0
+DirectFotons:512
+Gamma:2.3
+AOPower:0
+Exposure:0
+SunTurbidity:3
+SunSamples:16
+SkySamples:0
+SunSamplesI:2048
+SkySamplesI:0
+MaxLights:1000
+MappingMode:0
+BackgroundSelection:0
+ReflectiondSelection:0
+HDRSamples:10
+HDRSamplesI:16
+HDRScale:1
+HDRRotation:0
+HDRName:
+ABack:0
+ALightD:0
+ALightI:0
+AHdrD:0
+AHdrI:0
+ASunD:0
+ASunI:0
+ACaustics:0
+FPS:30
+IterationLimit:32
+HDR:0
+Antialiasing:1
+FixFaces:1
