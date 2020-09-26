@@ -1,0 +1,113 @@
+-- 107, BRIN, range_inclusion_ops, -|-     -- Mateusz Markiewicz, 298653
+Indeksy typu BRIN sprawdzają się najlepiej w przypadku bardzo dużych danych. 
+Indeks ten podzieli dane na strony, a następnie będzie starał się każdą z tych stron reprezentować przy pomocy 2 wartości. 
+Dla danych typu range wartości te opisują przedział, w którym zawierają się wszystkie przedziały z opisywanej strony. 
+Dzięki temu szukając w zapytaniu interesującego nas przedziału możemy szybko sprawdzić, czy może on znajdować się na danej stronie. 
+W ten sposób możemy wyeliminować wiele danych na raz, oszczędzając czas. W przypadku operatora -|- szukamy przedziałów sąsiadujących ze sobą. 
+Znając jeden z nich wiemy, od jakiej wartości zaczyna, lub na jakiej wartości kończy się przedział, który nas interesuje. 
+Możemy więc łatwo sprawdzić, czy może on znajdować się na danej stronie. 
+Główną zaletą indeksów BRIN jest fakt, że zamują one bardzo mało pamięci, dzięki czemu w przypadku dużych danych są częściej wybierane niż B-drzewa. 
+
+W moim eksperymencie mam dane dotyczące pomiaru temperatury w danym przedziale czasu. 
+Każdy pomiar trwa sekundę, co daje nam 86400 nowych wpisów każdego dnia. 
+Każde kolejne wpisy w tablicy powinny mieć następujący po sobie przedział czasowy, dzięki czemu BRIN powinien łatwo i skutecznie reprezentować strony takich danych. 
+Za pomocą operatora -|- będziemy chcieli znaleźć pomiary przed i po pomiarze odbywającym się w czasie [t0,t0+1s]. 
+Dzięki temu łatwo możemy sprawdzić, czy wpis ten nie odbiega znacznie od poprzedniego i następnego pomiaru, co sugerowałoby, że jest wynikiem błędu. 
+
+Musiałem użyć `set enable_seqscan=off;`, ponieważ bez tego ustawienia wybierany był seq scan zamiast wykorzystania indexu. 
+Postgres przeszacowywał ilość krotek w wyniku przez co wybierał mniej efektywną metodę wykonania. 
+
+CREATE TABLE temperatures(id SERIAL PRIMARY KEY, temp INT, timestamprange TSRANGE);
+INSERT INTO temperatures(temp,timestamprange) 
+    SELECT round(random()*100 - 50)::int,tsrange(ts,ts + '1 second'::INTERVAL) 
+    -- FROM generate_series('2019-01-01'::timestamp,'2019-01-16'::timestamp,'1 second') as ts;
+    FROM generate_series('2019-01-01'::timestamp,'2019-12-31'::timestamp,'1 second') as ts;
+
+VACUUM ANALYZE temperatures;
+
+explain analyze 
+    SELECT * 
+    FROM temperatures 
+    WHERE timestamprange -|- '["2019-01-10 10:00:00","2019-01-10 10:00:01")';
+
+explain analyze 
+    SELECT avg(temp) 
+    FROM temperatures 
+    WHERE '["2019-11-29 20:00:00","2019-11-29 20:00:01")' -|- timestamprange;    
+
+CREATE INDEX brin_range ON temperatures USING BRIN(timestamprange range_inclusion_ops) WITH (pages_per_range = 64);
+
+VACUUM ANALYZE temperatures;
+
+explain analyze 
+    SELECT * 
+    FROM temperatures 
+    WHERE timestamprange -|- '["2019-01-10 10:00:00","2019-01-10 10:00:01")';
+
+explain analyze 
+    SELECT avg(temp) 
+    FROM temperatures 
+    WHERE '["2019-11-29 20:00:00","2019-11-29 20:00:01")' -|- timestamprange;
+
+Wyniki:
+Bez indeksu:
+Pierwsze zapytanie:
+
+                                                              QUERY PLAN
+
+--------------------------------------------------------------------------------------------------------------------------------------
+ Seq Scan on temperatures  (cost=10000000000.00..10000624369.60 rows=31450 width=30) (actual time=1239.008..43817.552 rows=2 loops=1)   Filter: (timestamprange -|- '["2019-01-10 10:00:00","2019-01-10 10:00:01")'::tsrange)
+   Rows Removed by Filter: 31449599
+ Planning Time: 0.249 ms
+ Execution Time: 43817.568 ms
+(5 rows)
+
+Drugie zapytanie:
+                                                                QUERY PLAN
+
+------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=10000624448.23..10000624448.24 rows=1 width=32) (actual time=5102.320..5102.320 rows=1 loops=1)
+   ->  Seq Scan on temperatures  (cost=10000000000.00..10000624369.60 rows=31450 width=4) (actual time=4699.830..5091.909 rows=2 loops=1)
+         Filter: ('["2019-11-29 20:00:00","2019-11-29 20:00:01")'::tsrange -|- timestamprange)
+         Rows Removed by Filter: 31449599
+ Planning Time: 0.815 ms
+ Execution Time: 5102.470 ms
+(6 rows)
+
+Z indeksem:
+Pierwsze zapytanie:
+                                                               QUERY PLAN
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+ Gather  (cost=1139.69..399328.15 rows=31449 width=30) (actual time=3.719..442.588 rows=2 loops=1)
+   Workers Planned: 2
+   Workers Launched: 2
+   ->  Parallel Bitmap Heap Scan on temperatures  (cost=139.69..395183.25 rows=13104 width=30) (actual time=0.930..1.441 rows=1 loops=3)
+         Recheck Cond: (timestamprange -|- '["2019-01-10 10:00:00","2019-01-10 10:00:01")'::tsrange)
+         Rows Removed by Index Recheck: 2901
+         Heap Blocks: lossy=64
+         ->  Bitmap Index Scan on brin_range  (cost=0.00..131.82 rows=31448748 width=0) (actual time=1.621..1.621 rows=640 loops=1)  
+               Index Cond: (timestamprange -|- '["2019-01-10 10:00:00","2019-01-10 10:00:01")'::tsrange)
+ Planning Time: 0.349 ms
+ Execution Time: 442.625 ms
+(11 rows)
+
+Drugie zapytanie:
+                                                                     QUERY PLAN
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=396216.23..396216.24 rows=1 width=32) (actual time=49.695..49.695 rows=1 loops=1)
+   ->  Gather  (cost=396216.01..396216.22 rows=2 width=32) (actual time=18.405..50.739 rows=3 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         ->  Partial Aggregate  (cost=395216.01..395216.02 rows=1 width=32) (actual time=5.842..5.843 rows=1 loops=3)
+               ->  Parallel Bitmap Heap Scan on temperatures  (cost=139.69..395183.25 rows=13104 width=4) (actual time=5.707..5.827 rows=1 loops=3)
+                     Recheck Cond: ('["2019-11-29 20:00:00","2019-11-29 20:00:01")'::tsrange -|- timestamprange)
+                     Rows Removed by Index Recheck: 2901
+                     Heap Blocks: lossy=64
+                     ->  Bitmap Index Scan on brin_range  (cost=0.00..131.82 rows=31448748 width=0) (actual time=1.330..1.330 rows=640 loops=1)
+                           Index Cond: (timestamprange -|- '["2019-11-29 20:00:00","2019-11-29 20:00:01")'::tsrange)
+ Planning Time: 46.358 ms
+ Execution Time: 101.711 ms
+(13 rows)
+
