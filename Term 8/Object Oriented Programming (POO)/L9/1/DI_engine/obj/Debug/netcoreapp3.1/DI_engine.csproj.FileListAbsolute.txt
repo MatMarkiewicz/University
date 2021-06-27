@@ -1,0 +1,13 @@
+C:\Studia\8 semestr\POO\L9\1\DI_engine\obj\Debug\netcoreapp3.1\DI_engine.csprojAssemblyReference.cache
+C:\Studia\8 semestr\POO\L9\1\DI_engine\obj\Debug\netcoreapp3.1\DI_engine.AssemblyInfoInputs.cache
+C:\Studia\8 semestr\POO\L9\1\DI_engine\obj\Debug\netcoreapp3.1\DI_engine.AssemblyInfo.cs
+C:\Studia\8 semestr\POO\L9\1\DI_engine\obj\Debug\netcoreapp3.1\DI_engine.csproj.CoreCompileInputs.cache
+C:\Studia\8 semestr\POO\L9\1\DI_engine\bin\Debug\netcoreapp3.1\DI_engine.exe
+C:\Studia\8 semestr\POO\L9\1\DI_engine\bin\Debug\netcoreapp3.1\DI_engine.deps.json
+C:\Studia\8 semestr\POO\L9\1\DI_engine\bin\Debug\netcoreapp3.1\DI_engine.runtimeconfig.json
+C:\Studia\8 semestr\POO\L9\1\DI_engine\bin\Debug\netcoreapp3.1\DI_engine.runtimeconfig.dev.json
+C:\Studia\8 semestr\POO\L9\1\DI_engine\bin\Debug\netcoreapp3.1\DI_engine.dll
+C:\Studia\8 semestr\POO\L9\1\DI_engine\bin\Debug\netcoreapp3.1\DI_engine.pdb
+C:\Studia\8 semestr\POO\L9\1\DI_engine\obj\Debug\netcoreapp3.1\DI_engine.dll
+C:\Studia\8 semestr\POO\L9\1\DI_engine\obj\Debug\netcoreapp3.1\DI_engine.pdb
+C:\Studia\8 semestr\POO\L9\1\DI_engine\obj\Debug\netcoreapp3.1\DI_engine.genruntimeconfig.cache

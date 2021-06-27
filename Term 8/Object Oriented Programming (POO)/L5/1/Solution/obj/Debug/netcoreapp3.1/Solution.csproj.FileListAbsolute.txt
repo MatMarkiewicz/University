@@ -1,0 +1,17 @@
+C:\Studia\8 semestr\POO\L5\1\Solution\obj\Debug\netcoreapp3.1\Solution.csprojAssemblyReference.cache
+C:\Studia\8 semestr\POO\L5\1\Solution\obj\Debug\netcoreapp3.1\Solution.AssemblyInfoInputs.cache
+C:\Studia\8 semestr\POO\L5\1\Solution\obj\Debug\netcoreapp3.1\Solution.AssemblyInfo.cs
+C:\Studia\8 semestr\POO\L5\1\Solution\obj\Debug\netcoreapp3.1\Solution.csproj.CoreCompileInputs.cache
+C:\Studia\8 semestr\POO\L5\1\Solution\bin\Debug\netcoreapp3.1\Solution.exe
+C:\Studia\8 semestr\POO\L5\1\Solution\bin\Debug\netcoreapp3.1\Solution.deps.json
+C:\Studia\8 semestr\POO\L5\1\Solution\bin\Debug\netcoreapp3.1\Solution.runtimeconfig.json
+C:\Studia\8 semestr\POO\L5\1\Solution\bin\Debug\netcoreapp3.1\Solution.runtimeconfig.dev.json
+C:\Studia\8 semestr\POO\L5\1\Solution\bin\Debug\netcoreapp3.1\Solution.dll
+C:\Studia\8 semestr\POO\L5\1\Solution\bin\Debug\netcoreapp3.1\Solution.pdb
+C:\Studia\8 semestr\POO\L5\1\Solution\obj\Debug\netcoreapp3.1\Solution.dll
+C:\Studia\8 semestr\POO\L5\1\Solution\obj\Debug\netcoreapp3.1\Solution.pdb
+C:\Studia\8 semestr\POO\L5\1\Solution\obj\Debug\netcoreapp3.1\Solution.genruntimeconfig.cache
+C:\Studia\8 semestr\POO\L5\1\Solution\bin\Debug\netcoreapp3.1\MimeKit.dll
+C:\Studia\8 semestr\POO\L5\1\Solution\bin\Debug\netcoreapp3.1\netDumbster.dll
+C:\Studia\8 semestr\POO\L5\1\Solution\bin\Debug\netcoreapp3.1\BouncyCastle.Crypto.dll
+C:\Studia\8 semestr\POO\L5\1\Solution\obj\Debug\netcoreapp3.1\Solution.csproj.CopyComplete

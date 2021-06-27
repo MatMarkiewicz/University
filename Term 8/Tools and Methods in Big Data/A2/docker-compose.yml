@@ -1,0 +1,21 @@
+version: "3.9"
+services:
+  neo4j:
+    image: neo4j:latest
+    ports:
+      - "7474:7474"
+      - "7473:7473"
+      - "7687:7687"
+    volumes:
+    - ./data:/data
+    - ./logs:/logs
+    - ./import:/var/lib/neo4j/import
+    - ./data3:/var/lib/neo4j/data
+    environment:
+      NEO4J_AUTH: neo4j/test
+  jupyter:
+    build: .
+    ports:
+      - "8888:8888"
+    volumes:
+    - ./notebooks:/src/notebooks

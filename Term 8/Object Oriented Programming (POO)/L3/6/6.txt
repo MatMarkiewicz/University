@@ -1,0 +1,3 @@
+SRP dotyczy bardziej klasy, mówi, że pojedynczy moduł powinien mieć jedną rolę i być odpowiedzialny tylko za nią. 
+ISP dotyczy bardziej interfejsów, oraz sposobu, w jaki moduł będzie używany. Mówi o tym, by klient nie był
+zmuszony do implementowania rzeczy, które w rzeczywistości nie będą mu potrzebne.

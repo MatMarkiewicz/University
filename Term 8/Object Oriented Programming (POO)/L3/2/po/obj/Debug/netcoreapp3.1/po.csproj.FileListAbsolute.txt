@@ -1,0 +1,13 @@
+C:\Studia\8 semestr\POO\L3\2\po\obj\Debug\netcoreapp3.1\po.csprojAssemblyReference.cache
+C:\Studia\8 semestr\POO\L3\2\po\obj\Debug\netcoreapp3.1\po.AssemblyInfoInputs.cache
+C:\Studia\8 semestr\POO\L3\2\po\obj\Debug\netcoreapp3.1\po.AssemblyInfo.cs
+C:\Studia\8 semestr\POO\L3\2\po\obj\Debug\netcoreapp3.1\po.csproj.CoreCompileInputs.cache
+C:\Studia\8 semestr\POO\L3\2\po\bin\Debug\netcoreapp3.1\po.exe
+C:\Studia\8 semestr\POO\L3\2\po\bin\Debug\netcoreapp3.1\po.deps.json
+C:\Studia\8 semestr\POO\L3\2\po\bin\Debug\netcoreapp3.1\po.runtimeconfig.json
+C:\Studia\8 semestr\POO\L3\2\po\bin\Debug\netcoreapp3.1\po.runtimeconfig.dev.json
+C:\Studia\8 semestr\POO\L3\2\po\bin\Debug\netcoreapp3.1\po.dll
+C:\Studia\8 semestr\POO\L3\2\po\bin\Debug\netcoreapp3.1\po.pdb
+C:\Studia\8 semestr\POO\L3\2\po\obj\Debug\netcoreapp3.1\po.dll
+C:\Studia\8 semestr\POO\L3\2\po\obj\Debug\netcoreapp3.1\po.pdb
+C:\Studia\8 semestr\POO\L3\2\po\obj\Debug\netcoreapp3.1\po.genruntimeconfig.cache
