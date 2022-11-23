@@ -1,0 +1,18 @@
+Singularity> fdfind  -t f -e tflite -x zip {.}.zip {}
+updating: pet-dataset-tensorflow.clustered-2.tflite (deflated 48%)
+updating: pet-dataset-tensorflow.clustered-4.tflite (deflated 46%)
+updating: pet-dataset-tensorflow.clustered-8.tflite (deflated 44%)
+updating: pet-dataset-tensorflow.clustered-16.tflite (deflated 42%)
+updating: pet-dataset-tensorflow.clustered-32.tflite (deflated 40%)
+updating: pet-dataset-tensorflow.pruned-0.2.tflite (deflated 20%)
+updating: pet-dataset-tensorflow.pruned-0.4.tflite (deflated 35%)
+updating: pet-dataset-tensorflow.pruned-0.5.tflite (deflated 43%)
+Singularity> ls -s *.zip | sort -n
+ 8452 pet-dataset-tensorflow.clustered-2.zip
+ 8616 pet-dataset-tensorflow.clustered-4.zip
+ 8972 pet-dataset-tensorflow.clustered-8.zip
+ 9164 pet-dataset-tensorflow.pruned-0.5.zip
+ 9320 pet-dataset-tensorflow.clustered-16.zip
+ 9588 pet-dataset-tensorflow.clustered-32.zip
+10484 pet-dataset-tensorflow.pruned-0.4.zip
+12904 pet-dataset-tensorflow.pruned-0.2.zip
